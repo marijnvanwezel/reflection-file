@@ -1,0 +1,45 @@
+{
+  "name": "marijnvanwezel/reflection-file",
+  "description": "Library that allows reflection of PHP files.",
+  "type": "library",
+  "keywords": [
+    "reflection",
+    "files"
+  ],
+  "homepage": "https://github.com/marijnvanwezel/file-reflection",
+  "readme": "https://github.com/marijnvanwezel/file-reflection/README.md",
+  "license": "GPL-3.0-only",
+  "authors": [
+    {
+      "name": "Marijn van Wezel",
+      "email": "marijnvanwezel@gmail.com",
+      "homepage": "https://www.marijn.it",
+      "role": "lead"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/marijnvanwezel/file-reflection/issues",
+    "source": "https://github.com/marijnvanwezel/file-reflection"
+  },
+  "require": {
+    "php": ">=8.1",
+    "nikic/php-parser": "^4.13"
+  },
+  "autoload": {
+    "psr-4": {
+      "ReflectionFile\\": "src/"
+    }
+  },
+  "minimum-stability": "stable",
+  "config": {
+    "platform": {
+      "php": "8.1.0"
+    },
+    "optimize-autoloader": true,
+    "sort-packages": true
+  },
+  "require-dev": {
+    "mikey179/vfsstream": "^1.6",
+    "phpunit/phpunit": "^9.5"
+  }
+}
