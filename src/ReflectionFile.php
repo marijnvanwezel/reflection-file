@@ -11,10 +11,11 @@
 namespace ReflectionFile;
 
 use ParseError;
-use PhpParser\Error;
-use PhpParser\NodeTraverser;
-use PhpParser\ParserFactory;
+use ReflectionClass;
+use ReflectionEnum;
 use ReflectionException;
+use ReflectionFile\Reflection\SourceReflector;
+use ReflectionFunction;
 use SplFileInfo;
 use Stringable;
 
@@ -24,26 +25,33 @@ use Stringable;
 class ReflectionFile implements Stringable
 {
 	/**
-	 * @var SplFileInfo The reflected file.
-	 */
-	private SplFileInfo $file;
-
-	/**
 	 * @var string The source of the reflected file.
 	 */
 	private string $source;
 
 	/**
-	 * @var string[] The class names declared in the reflected file.
+	 * @var string The name of the file
 	 */
-	private array $declaredClassnames;
+	private string $fileName;
+
+	/**
+	 * @var string The pathname of the file.
+	 */
+	private string $pathName;
+
+	/**
+	 * @var SourceReflector Contains information about the source of the file
+	 */
+	private SourceReflector $reflector;
 
 	/**
 	 * Constructs a new ReflectionFile object.
 	 *
 	 * @param string|SplFileInfo $fileOrPath Either a string containing the name of the file to reflect, or the
 	 * SplFileInfo of the file to reflect.
+	 *
 	 * @throws ReflectionException When the file to reflect does not exist.
+	 * @throws ParseError When the file cannot not be parsed.
 	 */
 	public function __construct(string|SplFileInfo $fileOrPath)
 	{
@@ -53,14 +61,140 @@ class ReflectionFile implements Stringable
 			throw new ReflectionException('File "' . $fileOrPath . '" does not exist');
 		}
 
-		$source = @file_get_contents($file->getPathname());
-
-		if ($source === false) {
+		if (!$file->isReadable()) {
 			throw new ReflectionException('File "' . $fileOrPath . '" could not be read');
 		}
 
-		$this->file = $file;
-		$this->source = $source;
+		$this->fileName = $file->getFilename();
+		$this->pathName = $file->getPathname();
+
+		$this->source = file_get_contents($this->pathName);
+		$this->reflector = new SourceReflector($this->source);
+	}
+
+	/**
+	 * Gets an array of declared class names from the file.
+	 *
+	 * @return string[] An array of declared class names.
+	 */
+	public function getClassNames(): array
+	{
+		return $this->reflector->classNames;
+	}
+
+	/**
+	 * Gets an array of classes declared in the file.
+	 *
+	 * @return ReflectionClass[] An array of declared classes.
+	 * @throws ReflectionException When the reflection fails, for instance when the file is not included.
+	 */
+	public function getClasses(): array
+	{
+		return array_map(function (string $name): ReflectionClass {
+			return new ReflectionClass($name);
+		}, $this->reflector->classNames);
+	}
+
+	/**
+	 * Gets an array of declared trait names from the file.
+	 *
+	 * @return string[] An array of declared trait names.
+	 */
+	public function getTraitNames(): array
+	{
+		return $this->reflector->traitNames;
+	}
+
+	/**
+	 * Gets an array of traits declared in the file.
+	 *
+	 * @return ReflectionClass[] An array of declared traits.
+	 * @throws ReflectionException When the reflection fails, for instance when the file is not included.
+	 */
+	public function getTraits(): array
+	{
+		return array_map(function (string $name): ReflectionClass {
+			return new ReflectionClass($name);
+		}, $this->reflector->traitNames);
+	}
+
+	/**
+	 * Gets an array of declared interface names from the file.
+	 *
+	 * @return string[] An array of declared interface names.
+	 */
+	public function getInterfaceNames(): array
+	{
+		return $this->reflector->interfaceNames;
+	}
+
+	/**
+	 * Gets an array of interfaces declared in the file.
+	 *
+	 * @return ReflectionClass[] An array of declared interfaces.
+	 * @throws ReflectionException When the reflection fails, for instance when the file is not included.
+	 */
+	public function getInterfaces(): array
+	{
+		return array_map(function (string $name): ReflectionClass {
+			return new ReflectionClass($name);
+		}, $this->reflector->interfaceNames);
+	}
+
+	/**
+	 * Gets an array of declared enum names from the file.
+	 *
+	 * @return string[] An array of declared enum names.
+	 */
+	public function getEnumNames(): array
+	{
+		return $this->reflector->enumNames;
+	}
+
+	/**
+	 * Gets an array of enums declared in the file.
+	 *
+	 * @return ReflectionEnum[] An array of declared enums.
+	 * @throws ReflectionException When the reflection fails, for instance when the file is not included.
+	 */
+	public function getEnums(): array
+	{
+		return array_map(function (string $name): ReflectionEnum {
+			return new ReflectionEnum($name);
+		}, $this->reflector->enumNames);
+	}
+
+	/**
+	 * Gets an array of declared function names from the file.
+	 *
+	 * @return string[] An array of declared function names.
+	 */
+	public function getFunctionNames(): array
+	{
+		return $this->reflector->functionNames;
+	}
+
+	/**
+	 * Gets an array of functions declared in the file.
+	 *
+	 * @return ReflectionFunction[] An array of declared functions.
+	 * @throws ReflectionException When the reflection fails, for instance when the file is not included.
+	 */
+	public function getFunctions(): array
+	{
+		return array_map(function (string $name): ReflectionFunction {
+			return new ReflectionFunction($name);
+		}, $this->reflector->functionNames);
+	}
+
+	/**
+	 * Gets an array of declared constant names from the file.
+	 *
+	 * @return string[] An array of declared constant names.
+	 */
+	public function getConstantNames(): array
+	{
+		return $this->reflector->constNames;
 	}
 
 	/**
@@ -70,7 +204,17 @@ class ReflectionFile implements Stringable
 	 */
 	public function getFileName(): string
 	{
-		return $this->file->getFilename();
+		return $this->fileName;
+	}
+
+	/**
+	 * Gets the pathname of the file.
+	 *
+	 * @return string
+	 */
+	public function getPathName(): string
+	{
+		return $this->pathName;
 	}
 
 	/**
@@ -81,40 +225,6 @@ class ReflectionFile implements Stringable
 	public function getSource(): string
 	{
 		return $this->source;
-	}
-
-	/**
-	 * Gets an array of declared class names from the file.
-	 *
-	 * This class extracts the FQCNs from the file's source code by parsing it. This guarantees that the FQCNs returned
-	 * by this function are actually declared in the file, and are not just loaded by the file, unlike more naive
-	 * approaches such as using get_declared_classes().
-	 *
-	 * @return string[] An array of declared class names.
-	 *
-	 * @throws ParseError When the file could not be parsed.
-	 */
-	public function getDeclaredClassnames(): array
-	{
-		if (!isset($this->declaredClassnames)) {
-			try {
-				// This parser counterintuitively also supports >=PHP 8.0
-				$statements = (new ParserFactory())->create(ParserFactory::ONLY_PHP7)->parse($this->source);
-			} catch (Error $error) {
-				throw new ParseError('File "' . $this->file->getPathname() .
-					'" could not be parsed', 0, $error);
-			}
-
-			$visitor = new FQCNVisitor();
-
-			$traverser = new NodeTraverser();
-			$traverser->addVisitor($visitor);
-			$traverser->traverse($statements);
-
-			$this->declaredClassnames = $visitor->getClassNames();
-		}
-
-		return $this->declaredClassnames;
 	}
 
 	/**
