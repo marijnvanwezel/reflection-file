@@ -120,7 +120,7 @@ $functions = $reflectionFile->getFunctionNames();
 
 ### Getting the declared constants
 
-To get a file's declared constants, use `getFunctionNames`:
+To get a file's declared constants, use `getConstantNames`:
 
 ```php
 /** @var string[] $constants */
